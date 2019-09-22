@@ -1,0 +1,242 @@
+1)****************************************************************************
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+char sfname[10],tfname[10],instr[80],w1[10],w2[60],w3[10],w4[10],mdt[50][4][20];
+FILE *sfp,*tfp;	int mc=0,pntcnt,mec;
+struct MNT
+{	char mname[10]; int pp,kp,pntptr,mdtstart,mdtend;}mnt[10];
+struct PNT
+{	char pname[20],defval[20],actval[20];}pnt[40];
+int searchpnt(char w[])
+{
+	int i;	for(i=mnt[mc].pntptr ; i<mnt[mc].pntptr+mnt[mc].pp+mnt[mc].kp; i++)
+				if(!stricmp(pnt[i].pname,w))	return i;
+				return -1;
+}
+int searchkpt(int pos,char w[])
+{
+	int i,j;	for(i=mnt[pos].pntptr+mnt[pos].pp,j=0 ; j<mnt[pos].kp ; i++,j++)
+				if(!stricmp(w,pnt[i].pname))	return i;
+				return -1;
+}
+int searchmnt(char w[])
+{
+	int i;	for(i=0; i<mc ; i++)	if(!stricmp(mnt[i].mname,w))	return i;
+				return -1;
+}
+void MDP()
+{
+	int n;	fgets(instr,80,sfp);
+	n=sscanf(instr,"%s %s",w1,w2);
+	printf("%s\t%s\n",w1,w2);
+	strcpy(mnt[mc].mname,w1);
+	if(n==2)
+	{  int i,j;char *p; mnt[mc].pntptr=pntcnt;
+		for(p=strtok(w2,",") ; p ;  )
+		{
+			
+
+			if(!strchr(p,'='))
+			{
+				puts(p);
+				strcpy(pnt[pntcnt].pname,p);
+				strcpy(pnt[pntcnt++].actval,p); mnt[mc].pp++;
+			}
+			else
+			{
+				 char *q,str[50];
+				 q=NULL;
+				 strcpy(str,p);
+				 q=strtok(str,"=");
+				 puts(q);
+				 strcpy(pnt[pntcnt].pname,q);
+				 q=strtok(NULL,",");
+				 puts(q);
+				 strcpy(pnt[pntcnt++].defval,q); mnt[mc].kp++;
+			}
+			p=strtok(NULL,",");
+		}
+	}
+	mnt[mc+1].pntptr=pntcnt;
+	fgets(instr,80,sfp);	sscanf(instr,"%s %s %s %s",w1,w2,w3,w4);
+	mnt[mc].mdtstart=mec;
+	for( ; stricmp(w1,"mend") ; mec++)
+	{  
+		fgets(instr,80,sfp);	sscanf(instr,"%s %s %s %s",w1,w2,w3,w4);
+	}
+	mnt[mc].mdtend=mec;
+}
+void displaypnt()
+{
+	 int i; 	printf("\n---------Parameter Name Table--------\npname\tdefval\tactval\n");
+				for(i=0 ; i<pntcnt ; i++)	printf("%s\t%s\t%s\n",pnt[i].pname,pnt[i].defval,pnt[i].actval);
+}
+void display()
+{
+	int i,j;
+	printf("\n---------Macro Name Table--------\nmname\tpp\tkp\tpntptr\tmdtstart\tmdtend\n");
+	for(i=0 ; i<mc ; i++)	printf("%s\t%d\t%d\t%d\t%d\t%d\n",mnt[i].mname,mnt[i].pp,mnt[i].kp,mnt[i].pntptr,mnt[i].mdtstart,mnt[i].mdtend);
+}
+int main(int argc, char *argv[])
+{
+	if(argc==2)
+		strcpy(sfname,argv[1]);
+	else
+	{	printf("Enter source file : "); scanf("%s",sfname);
+		printf("Enter target file : "); scanf("%s",tfname);
+	}
+	
+
+	sfp=fopen(sfname,"r");
+	tfp=fopen(tfname,"w+");
+	if(sfp==NULL)	{	printf("File not exist.\n"); exit(0);	}
+	else
+	{	while(!feof(sfp))
+		{
+			fgets(instr,80,sfp); sscanf(instr,"%s %s",w1,w2);
+			if(!feof(sfp))
+			{  
+
+				if(stricmp(w1,"macro")==0)		{	MDP(); mc++;	}
+				else	fprintf(tfp,"%s",instr);
+			}
+		}
+	}displaypnt();display();
+	fclose(sfp);fclose(tfp);
+	return 0;
+}
+
+2)****************************************************************************
+
+#include<stdio.h>
+#include<malloc.h>
+#include<stdlib.h>
+#define newnode (struct node *)malloc(sizeof(struct node))
+
+struct node
+{
+	int jno,ar_time,br_time,co_time,rem_time,sub_time,prio;
+	struct node * next;
+}*jobq=NULL,*finish=NULL;
+int nj;
+struct node * append(struct node *f,struct node *t)
+{
+	struct node *s;
+	if(f==NULL)
+	f=t;
+	else
+	{
+		for(s=f;s->next!=NULL;s=s->next);
+		s->next=t;
+	}	
+return f;
+}
+void creatjobq()
+{
+	struct node *t;
+	int i;
+	printf("How many jobs???\n");
+	scanf("%d",&nj);
+	for(i=0;i<nj;i++)
+	{
+		t=newnode;
+		t->jno=i+1;
+		t->co_time=0;
+		t->next=NULL;
+		printf("Enter the arival time of job %d::",i+1);
+		scanf("%d",&t->ar_time);
+		printf("Enter the burst time of job %d::",i+1);
+		scanf("%d",&t->br_time);
+		printf("Enter the priority of job %d::",i+1);
+		scanf("%d",&t->prio);
+		t->rem_time=t->br_time;
+		t->sub_time=t->ar_time;
+		jobq=append(jobq,t);
+	}
+}
+void display()
+{
+	struct node *s;
+	printf("jno\tar time\tbr time\tPriority");
+	for(s=jobq;s!=NULL;s=s->next)
+	printf("\n%d\t%d\t%d\t%d",s->jno,s->ar_time,s->br_time,s->prio);
+}
+struct node * selectjob(struct node *f,int time)
+{
+	struct node *s,*t=NULL;int min=3678;
+	for(s=f;s!=NULL;s=s->next)
+	{
+		if(s->ar_time<=time)  
+		{
+			if(s->prio<min){min=s->prio;t=s;}
+			else if(s->prio==min && s->ar_time<t->ar_time)t=s;
+		}
+	}
+	return t;
+
+}
+void delnode(struct node *s)
+{
+	struct node *t;
+	if(jobq==s)
+	jobq=jobq->next;
+	else
+	{
+	for(t=jobq;t->next!=s;t=t->next);
+		t->next=s->next;
+	}
+	s->next=NULL;
+	finish=append(finish,s);
+	
+}
+void execute()
+{
+	struct node *s=NULL,*t;int time=0;
+	int wt=0,tat=0,avgtat=0,avgwt=0;
+	if(jobq==NULL)
+	{
+	printf("\nNO jobs available");
+	return;
+	}
+	printf("\ngant chart");
+	while(jobq!=NULL)
+	{
+		s=selectjob(jobq,time);
+		if(s==NULL){printf("|---idel---");time++;}
+		else
+		{
+			
+			time+=s->br_time;
+			if(s->co_time==0)
+			{
+				s->co_time=time;
+			}
+			else
+			{
+				printf("|---%d---|",s->jno);
+				delnode(s);
+			}
+		}
+	}
+
+	printf("|\nreport");printf("\njobno\tarivrltime\tbursttime\tPriority\tco time\tTAT\tWT\n");
+	for(t=finish;t!=NULL;t=t->next)
+	{
+		tat=t->co_time-t->sub_time;
+		wt=tat-t->br_time;
+		
+		printf("\n%d\t%d\t\t%d\t\t%d\t\t%d\t%d\t%d\t\n",t->jno,t->sub_time,t->br_time,t->prio,t->co_time,tat,wt);
+		avgtat+=tat;
+		avgwt+=wt;
+	}
+	printf("average TAT=%f",avgtat/(float)nj);
+	printf("average WT=%f",avgwt/(float)nj);	
+}
+main()
+{
+	creatjobq();
+	display();
+	execute();
+}
